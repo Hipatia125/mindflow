@@ -1,0 +1,330 @@
+/* ========================================================================
+   MindFlow · Global Styles & Design Tokens
+   风格：温暖治愈 · 毛玻璃质感 · 柔和渐变
+   使用说明：所有色值都通过 CSS 变量引用，修改此处即可全局换肤
+   ======================================================================== */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* ============================================================
+     🌈 颜色设计令牌（温暖治愈调色板）
+     格式：HSL —— 便于透明度调整（使用 hsl(var(--x) / 0.5)）
+     ============================================================ */
+  :root {
+    /* 画布背景 —— 奶油米白 → 浅桃粉 柔和渐变 */
+    --background: 30 40% 98%;
+    --foreground: 25 20% 18%;
+
+    /* 主色：暖珊瑚橙 Peachy Coral */
+    --primary: 18 75% 62%;
+    --primary-foreground: 30 40% 98%;
+    --primary-50: 20 80% 96%;
+    --primary-100: 20 78% 92%;
+    --primary-200: 19 76% 84%;
+    --primary-300: 18 74% 72%;
+    --primary-400: 18 75% 66%;
+    --primary-500: 18 75% 62%;
+    --primary-600: 16 68% 52%;
+    --primary-700: 14 65% 42%;
+    --primary-800: 14 60% 34%;
+    --primary-900: 12 55% 28%;
+
+    /* 辅色：薰衣草紫 Lavender Mist */
+    --secondary: 260 55% 78%;
+    --secondary-foreground: 260 30% 18%;
+    --secondary-50: 260 60% 97%;
+    --secondary-100: 260 58% 93%;
+    --secondary-200: 260 56% 88%;
+    --secondary-300: 260 56% 82%;
+    --secondary-400: 260 55% 80%;
+    --secondary-500: 260 55% 78%;
+    --secondary-600: 258 48% 68%;
+    --secondary-700: 256 42% 58%;
+    --secondary-800: 254 38% 48%;
+    --secondary-900: 252 35% 38%;
+
+    /* 成功色：抹茶绿 Matcha */
+    --success: 120 35% 58%;
+    --success-foreground: 120 20% 98%;
+    --success-50: 120 45% 96%;
+    --success-100: 120 42% 92%;
+    --success-200: 120 40% 84%;
+    --success-500: 120 35% 58%;
+    --success-600: 120 32% 48%;
+    --success-700: 120 30% 38%;
+
+    /* 警告色：琥珀黄 Soft Amber */
+    --warning: 38 90% 60%;
+    --warning-foreground: 38 30% 18%;
+    --warning-50: 40 92% 96%;
+    --warning-100: 40 90% 92%;
+    --warning-200: 40 88% 84%;
+    --warning-500: 38 90% 60%;
+    --warning-600: 36 82% 50%;
+    --warning-700: 34 78% 40%;
+
+    /* 错误色：玫瑰红 Soft Rose */
+    --destructive: 0 72% 70%;
+    --destructive-foreground: 0 20% 98%;
+    --destructive-50: 0 78% 97%;
+    --destructive-100: 0 76% 93%;
+    --destructive-200: 0 74% 86%;
+    --destructive-500: 0 72% 70%;
+    --destructive-600: 0 65% 60%;
+    --destructive-700: 0 60% 50%;
+
+    /* 中性色层 */
+    --muted: 30 20% 94%;
+    --muted-foreground: 25 12% 45%;
+    --accent: 20 80% 94%;
+    --accent-foreground: 18 60% 35%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 25 20% 18%;
+    --card: 0 0% 100%;
+    --card-foreground: 25 20% 18%;
+
+    /* 边框 & 输入 & 聚焦环 */
+    --border: 25 18% 88%;
+    --input: 25 18% 88%;
+    --ring: 18 75% 62%;
+
+    /* 热力图色阶（GitHub风格，但更温暖）
+       两个命名同时支持：
+         · Tailwind config 引用的是 --heatmap-level-N
+         · 老代码/组件里直接引用的是 --heatmap-N
+       这里让两者等价，避免 Tailwind 编译完没色值 */
+    --heatmap-0: 30 30% 94%;
+    --heatmap-1: 18 60% 82%;
+    --heatmap-2: 18 70% 68%;
+    --heatmap-3: 16 72% 55%;
+    --heatmap-4: 14 75% 40%;
+    --heatmap-level-0: var(--heatmap-0);
+    --heatmap-level-1: var(--heatmap-1);
+    --heatmap-level-2: var(--heatmap-2);
+    --heatmap-level-3: var(--heatmap-3);
+    --heatmap-level-4: var(--heatmap-4);
+
+    /* ============================================================
+       🔲 圆角设计令牌
+       ============================================================ */
+    --radius-xs: 0.375rem;   /* 6px  */
+    --radius-sm: 0.5rem;     /* 8px  */
+    --radius-md: 0.75rem;    /* 12px */
+    --radius-lg: 1rem;       /* 16px */
+    --radius-xl: 1.25rem;    /* 20px */
+    --radius-2xl: 1.5rem;    /* 24px */
+    --radius-3xl: 2rem;      /* 32px */
+
+    /* ============================================================
+       📏 字体大小设计令牌（基准 16px）
+       ============================================================ */
+    --fs-xs: 0.75rem;    /* 12px */
+    --fs-sm: 0.875rem;   /* 14px */
+    --fs-base: 1rem;     /* 16px */
+    --fs-lg: 1.125rem;   /* 18px */
+    --fs-xl: 1.25rem;    /* 20px */
+    --fs-2xl: 1.5rem;    /* 24px */
+    --fs-3xl: 1.875rem;  /* 30px */
+    --fs-4xl: 2.25rem;   /* 36px */
+    --fs-5xl: 3rem;      /* 48px */
+
+    /* ============================================================
+       🌫 阴影层级（柔和、轻盈）
+       ============================================================ */
+    --shadow-sm: 0 1px 2px 0 rgb(18 60% 30% / 0.04),
+                 0 1px 3px 0 rgb(18 60% 30% / 0.03);
+    --shadow-md: 0 2px 6px -1px rgb(18 60% 30% / 0.06),
+                 0 4px 12px -2px rgb(18 60% 30% / 0.05);
+    --shadow-lg: 0 8px 20px -4px rgb(18 60% 30% / 0.08),
+                 0 12px 28px -8px rgb(18 60% 30% / 0.07);
+    --shadow-xl: 0 16px 32px -8px rgb(18 60% 30% / 0.10),
+                 0 24px 48px -16px rgb(18 60% 30% / 0.08);
+    --shadow-2xl: 0 24px 48px -12px rgb(18 60% 30% / 0.12),
+                  0 36px 72px -24px rgb(18 60% 30% / 0.10);
+    --shadow-glow: 0 0 32px -4px hsl(var(--primary) / 0.35),
+                   0 0 64px -12px hsl(var(--secondary) / 0.25);
+  }
+
+  /* ============================================================
+     🌙 深色模式（预留，后续可扩展）
+     ============================================================ */
+  .dark {
+    --background: 25 20% 10%;
+    --foreground: 30 20% 95%;
+    --card: 25 20% 14%;
+    --card-foreground: 30 20% 95%;
+    --popover: 25 20% 14%;
+    --popover-foreground: 30 20% 95%;
+    --muted: 25 18% 20%;
+    --muted-foreground: 30 15% 70%;
+    --accent: 25 18% 22%;
+    --accent-foreground: 20 60% 85%;
+    --border: 25 18% 24%;
+    --input: 25 18% 24%;
+    --ring: 18 75% 62%;
+  }
+
+  /* ============================================================
+     基础元素样式
+     ============================================================ */
+  * {
+    @apply border-border;
+  }
+  html {
+    @apply scroll-smooth;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial,
+      sans-serif;
+    /* 全局柔和渐变背景 */
+    background-image:
+      radial-gradient(
+        circle at 15% 10%,
+        hsl(var(--primary-100) / 0.6) 0%,
+        transparent 45%
+      ),
+      radial-gradient(
+        circle at 85% 20%,
+        hsl(var(--secondary-100) / 0.5) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 50% 100%,
+        hsl(var(--success-100) / 0.35) 0%,
+        transparent 55%
+      );
+    background-attachment: fixed;
+    background-size: 200% 200%;
+    animation: gradient-shift 18s ease infinite;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  /* ============================================================
+     🧊 毛玻璃卡片（核心视觉组件）
+     使用：<div class="glass-card">内容</div>
+     ============================================================ */
+  .glass-card {
+    @apply rounded-2xl border border-white/60 bg-white/55 shadow-lg backdrop-blur-xl
+           transition-all duration-300
+           hover:shadow-xl hover:bg-white/70;
+  }
+  .glass-card-strong {
+    @apply rounded-2xl border border-white/70 bg-white/75 shadow-xl backdrop-blur-2xl
+           transition-all duration-300;
+  }
+  .glass-card-subtle {
+    @apply rounded-xl border border-white/40 bg-white/35 shadow-md backdrop-blur-lg;
+  }
+
+  /* ============================================================
+     💫 渐变文字 / 渐变按钮
+     ============================================================ */
+  .gradient-text {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary-500)) 0%,
+      hsl(var(--primary-400)) 40%,
+      hsl(var(--secondary-500)) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .gradient-btn {
+    @apply relative inline-flex items-center justify-center gap-2 rounded-xl
+           px-5 py-2.5 text-sm font-medium text-white
+           shadow-md transition-all duration-300
+           hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary-500)) 0%,
+      hsl(var(--primary-400)) 50%,
+      hsl(var(--secondary-500)) 100%
+    );
+    background-size: 180% 180%;
+  }
+  .gradient-btn:hover {
+    background-position: 100% 50%;
+  }
+
+  /* ============================================================
+     ✨ Streak 火焰徽章 / 完成度圆环等
+     ============================================================ */
+  .streak-badge {
+    @apply inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r
+           from-warning-500 to-primary-500 px-3 py-1 text-xs font-semibold
+           text-white shadow-md animate-pulse-soft;
+  }
+
+  /* ============================================================
+     📋 任务条目
+     ============================================================ */
+  .task-row {
+    @apply flex items-center gap-3 rounded-xl bg-white/60 px-4 py-3
+           border border-white/50 backdrop-blur-md
+           transition-all duration-200 hover:bg-white/80 hover:shadow-md;
+  }
+
+  /* ============================================================
+     💬 聊天气泡
+     ============================================================ */
+  .bubble-user {
+    @apply ml-auto max-w-[85%] rounded-2xl rounded-tr-sm px-4 py-2.5 text-white shadow-md;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary-500)) 0%,
+      hsl(var(--primary-400)) 100%
+    );
+  }
+  .bubble-ai {
+    @apply mr-auto max-w-[85%] rounded-2xl rounded-tl-sm px-4 py-2.5
+           bg-white/75 border border-white/60 text-foreground shadow-md backdrop-blur-md;
+  }
+}
+
+@layer utilities {
+  /* 隐藏滚动条但保留功能 */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 自定义好看的滚动条 */
+  .scrollbar-pretty::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-pretty::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-pretty::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary-200) / 0.8);
+    border-radius: 9999px;
+  }
+  .scrollbar-pretty::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary-300) / 0.9);
+  }
+
+  /* 「思考中…」省略号闪烁动画 */
+  .dots-animation::after {
+    content: "...";
+    display: inline-block;
+    animation: dots-blink 1.2s ease-in-out infinite;
+  }
+
+  @keyframes dots-blink {
+    0%, 100% { opacity: 0.25; }
+    50% { opacity: 1; }
+  }
+}
