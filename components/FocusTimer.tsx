@@ -179,7 +179,9 @@ export default function FocusTimer({
     })
       .then((res) => {
         if (res.ok && res.achievements) {
-          setChallengeAchievements(res.achievements.map((a) => a.badge_code));
+          setChallengeAchievements(
+            res.achievements.map((a: { badge_code: string }) => a.badge_code)
+          );
         }
       })
       .catch(() => {});

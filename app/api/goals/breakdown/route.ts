@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextRequest, NextResponse } from "next/server";
 import { getUserIdFromHeaders } from "@/lib/supabase/client";
 import { todayISO, shiftDateISO } from "@/lib/utils";

@@ -22,14 +22,13 @@ const newid = () =>
     : "mf_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
 
 /* ----------------------------------------------------------------
- * 持久化：写入项目根目录 .mindflow-mock.json（进程重启数据仍在）
+ * Mock 数据存储（内存态）
+ *
+ * 原实现用 node:fs 持久化到 .mindflow-mock.json，但 Cloudflare Pages
+ * 的 Edge 运行时没有 node:fs，静态 import 会让所有 API 路由在构建/运行
+ * 阶段失败。故改为内存单例：进程内持久、首次访问自动 seed、生产环境
+ * （已配 Supabase）本就不会走 mock 分支，无影响。
  * -------------------------------------------------------------- */
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const MOCK_FILE = resolve(__dirname, "..", "..", ".mindflow-mock.json");
 
 interface MockStore {
   tasks: MockRow<Task>[];
@@ -204,45 +203,21 @@ function ensureSeed(store: MockStore): MockStore {
     },
   ];
 
-  try {
-    mkdirSync(dirname(MOCK_FILE), { recursive: true });
-    writeFileSync(MOCK_FILE, JSON.stringify(store, null, 2), "utf-8");
-  } catch {
-    /* ignore */
-  }
   return store;
 }
 
+/** 内存单例：进程生命周期内共享同一份 mock 数据 */
+let _store: MockStore | null = null;
+
 export function loadStore(): MockStore {
-  try {
-    if (!existsSync(MOCK_FILE)) {
-      return ensureSeed(structuredClone(EMPTY_STORE));
-    }
-    const raw = readFileSync(MOCK_FILE, "utf-8");
-    const json = JSON.parse(raw) as Partial<MockStore>;
-    const store: MockStore = {
-      tasks: Array.isArray(json.tasks) ? json.tasks : [],
-      reviews: Array.isArray(json.reviews) ? json.reviews : [],
-      diaryEntries: Array.isArray(json.diaryEntries) ? json.diaryEntries : [],
-      focusSessions: Array.isArray((json as any).focusSessions) ? (json as any).focusSessions : [],
-      goals: Array.isArray((json as any).goals) ? (json as any).goals : [],
-      goalSteps: Array.isArray((json as any).goalSteps) ? (json as any).goalSteps : [],
-      achievements: Array.isArray((json as any).achievements) ? (json as any).achievements : [],
-      chatMessages: Array.isArray((json as any).chatMessages) ? (json as any).chatMessages : [],
-    };
-    return ensureSeed(store);
-  } catch {
-    return ensureSeed(structuredClone(EMPTY_STORE));
+  if (!_store) {
+    _store = ensureSeed(structuredClone(EMPTY_STORE));
   }
+  return _store;
 }
 
 function saveStore(store: MockStore) {
-  try {
-    mkdirSync(dirname(MOCK_FILE), { recursive: true });
-    writeFileSync(MOCK_FILE, JSON.stringify(store, null, 2), "utf-8");
-  } catch {
-    /* ignore */
-  }
+  _store = store;
 }
 
 /* ================================================================
@@ -639,7 +614,7 @@ export function mockGetGoal(id: string): MockRow<Goal> | null {
   return s.goals.find((g) => g.id === id) || null;
 }
 
-export function mockCreateGoal(userId: string, row: GoalInsert): MockRow<Goal> {
+export function mockCreateGoal(userId: string, row: Omit<GoalInsert, "user_id">): MockRow<Goal> {
   const s = loadStore();
   const uid = _resolveMockedUid(userId, s);
   const now = new Date().toISOString();
@@ -762,7 +737,7 @@ export function mockListAchievements(userId: string): MockRow<Achievement>[] {
 
 export function mockUnlockAchievement(
   userId: string,
-  row: AchievementInsert
+  row: Omit<AchievementInsert, "user_id">
 ): MockRow<Achievement> {
   const s = loadStore();
   const uid = _resolveMockedUid(userId, s);

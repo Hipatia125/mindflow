@@ -11,7 +11,7 @@ export interface ApiResult<T = unknown> {
   ok: boolean;
   data?: T;
   error?: string;
-  [k: string]: unknown;
+  [k: string]: any;
 }
 
 export interface FetchApiOptions extends RequestInit {
@@ -56,7 +56,7 @@ export async function fetchApi<T = unknown>(
           });
         });
       }
-      return { ok: false, error: msg, ...json };
+      return { ...json, ok: false, error: msg };
     }
 
     return json as ApiResult<T>;

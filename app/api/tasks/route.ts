@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin, getUserIdFromHeaders } from "@/lib/supabase/client";
 import { todayISO } from "@/lib/utils";
@@ -185,13 +186,15 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    const taskId: string = id;
+
     /** Supabase 分支的 patch 计算 */
-    async function supabasePatch(): Promise<TaskUpdate> {
+    const supabasePatch = async (): Promise<TaskUpdate> => {
       const supabase = getSupabaseAdmin();
       const { data: curData, error: curErr } = await supabase
         .from("tasks")
         .select("focus_minutes")
-        .eq("id", id)
+        .eq("id", taskId)
         .eq("user_id", uid)
         .maybeSingle();
       if (curErr) throw curErr;
@@ -204,10 +207,10 @@ export async function PATCH(req: NextRequest) {
       if (typeof body.content === "string") update.content = body.content;
       if (typeof body.due_date === "string") update.due_date = body.due_date;
       return update;
-    }
+    };
 
     /** Mock 分支的 patch 计算 */
-    function mockPatch(): TaskUpdate {
+    const mockPatch = (): TaskUpdate => {
       const { add_focus_minutes, ...rest } = body;
       const patch: TaskUpdate = {};
       if (typeof rest.is_done === "boolean") patch.is_done = rest.is_done;
@@ -215,11 +218,11 @@ export async function PATCH(req: NextRequest) {
       if (typeof rest.due_date === "string") patch.due_date = rest.due_date;
       if (typeof rest.focus_minutes === "number") patch.focus_minutes = rest.focus_minutes;
       if (typeof add_focus_minutes === "number") {
-        const cur = mockFindTaskById(id);
+        const cur = mockFindTaskById(taskId);
         patch.focus_minutes = (cur?.focus_minutes || 0) + add_focus_minutes;
       }
       return patch;
-    }
+    };
 
     // —— 第一阶段：算 patch（Supabase 分支能先拿 curData；失败则降级用 Mock 分支算 patch）
     let patch: TaskUpdate;

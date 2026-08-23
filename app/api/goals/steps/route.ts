@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin, getUserIdFromHeaders } from "@/lib/supabase/client";
 import { shouldUseMock, mockUpdateGoalStep, mockMarkStepAdded } from "@/lib/supabase/mock-store";

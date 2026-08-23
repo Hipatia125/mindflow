@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin, getUserIdFromHeaders } from "@/lib/supabase/client";
 import {
@@ -20,7 +21,7 @@ const DEEPSEEK_MODEL = "deepseek-chat";
  * 心理知识库（CBT 认知重构 + 正念 + 情绪调节 + 呼吸练习）
  * 当 AI 回复涉及对应场景时，可直接用这些专业模板推荐
  * ================================================================ */
-export const PSYCHOLOGY_KNOWLEDGE = [
+const PSYCHOLOGY_KNOWLEDGE = [
   {
     id: "cbt_three_cols",
     title: "CBT 三栏法·认知重构练习",

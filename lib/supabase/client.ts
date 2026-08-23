@@ -1,5 +1,4 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { MindFlowDatabase } from "./types";
 
 /**
  * ================================================================
@@ -18,7 +17,11 @@ import type { MindFlowDatabase } from "./types";
  * ================================================================
  */
 
-export type MindFlowSupabase = SupabaseClient<MindFlowDatabase>;
+// 宽松类型：项目用「手写 interface」维护 types.ts，未完全对齐 supabase-js 的
+// GenericTable 约束（需 Record<string, unknown> + Relationships 字段），会导致
+// .from() 被推断为 never。故这里用无泛型的 SupabaseClient（Row/Insert 均为 any），
+// 保留运行时行为、去掉编译期误报。types.ts 的 MindFlowDatabase 仍作为数据模型真源。
+export type MindFlowSupabase = SupabaseClient;
 
 /* ----------------------------------------------------------------
  * 🌐 浏览器端客户端（客户端组件 safe）
@@ -45,7 +48,7 @@ export function createSupabaseBrowserClient(): MindFlowSupabase {
       );
     }
     // 返回一个能创建成功但无实际后端的客户端（避免构造阶段抛异常）
-    browserClient = createClient<MindFlowDatabase>(
+    browserClient = createClient(
       "https://placeholder.supabase.co",
       "placeholder-anon-key",
       { auth: { persistSession: false } }
@@ -53,7 +56,7 @@ export function createSupabaseBrowserClient(): MindFlowSupabase {
     return browserClient;
   }
 
-  browserClient = createClient<MindFlowDatabase>(url, anonKey, {
+  browserClient = createClient(url, anonKey, {
     auth: {
       persistSession: false, // MVP 阶段暂不使用 Supabase Auth
       autoRefreshToken: false,
@@ -85,7 +88,7 @@ export function getSupabaseAdmin(): MindFlowSupabase {
     );
   }
 
-  adminClient = createClient<MindFlowDatabase>(url, serviceKey, {
+  adminClient = createClient(url, serviceKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,

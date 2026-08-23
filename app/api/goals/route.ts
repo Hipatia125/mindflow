@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin, getUserIdFromHeaders } from "@/lib/supabase/client";
 import {
@@ -100,7 +101,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "标题不能为空" }, { status: 400 });
     }
 
-    const goalData: GoalInsert = {
+    const goalData: Omit<GoalInsert, "user_id"> = {
       title: body.title.trim(),
       description: body.description ?? null,
       target_date: body.target_date ?? null,
