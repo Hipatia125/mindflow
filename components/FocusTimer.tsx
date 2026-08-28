@@ -154,6 +154,10 @@ export default function FocusTimer({
   const challengeRoundRef = React.useRef(0);
   const challengeActiveRef = React.useRef(false);
   const lastPausedAtRef = React.useRef<number>(0);
+  // 墙钟时间戳：倒计时/番茄钟的截止时刻（epoch ms）；按此重算可避免后台标签节流导致的计时停滞
+  const endsAtRef = React.useRef<number | null>(null);
+  // 秒表起始时刻（epoch ms，暂停时累加偏移以保持连续）
+  const stopwatchStartRef = React.useRef<number | null>(null);
 
   /* —— 同步 refs —— */
   React.useEffect(() => {
@@ -191,14 +195,20 @@ export default function FocusTimer({
   React.useEffect(() => {
     if (trigger === 0) return;
     if (externalMode) {
+      const now = Date.now();
       setMode(externalMode);
       if (externalMode === "pomodoro") {
         setPhase("focus");
-        setTimeRemaining(focusMinutes * 60);
+        const secs = focusMinutes * 60;
+        setTimeRemaining(secs);
+        endsAtRef.current = now + secs * 1000;
       } else if (externalMode === "countdown") {
-        setTimeRemaining(countdownMinutes * 60);
+        const secs = countdownMinutes * 60;
+        setTimeRemaining(secs);
+        endsAtRef.current = now + secs * 1000;
       } else {
         setElapsedSeconds(0);
+        stopwatchStartRef.current = now;
       }
       setStatus("running");
       sessionStartRef.current = new Date().toISOString();
@@ -206,7 +216,7 @@ export default function FocusTimer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trigger]);
 
-  /* —— 计时器核心循环 —— */
+  /* —— 计时器核心循环：按墙钟时间戳重算，杜绝后台节流导致的计时漂移 —— */
   React.useEffect(() => {
     if (status !== "running") {
       if (intervalRef.current) {
@@ -216,7 +226,7 @@ export default function FocusTimer({
       return;
     }
 
-    intervalRef.current = setInterval(() => {
+    const tick = () => {
       // 挑战模式中断检测：暂停超过10分钟自动结束
       if (challengeActiveRef.current && lastPausedAtRef.current > 0) {
         const elapsed = (Date.now() - lastPausedAtRef.current) / 1000;
@@ -226,12 +236,18 @@ export default function FocusTimer({
         }
       }
 
+      const now = Date.now();
       if (mode === "stopwatch") {
-        setElapsedSeconds((s) => s + 1);
-      } else {
-        setTimeRemaining((prev) => Math.max(0, prev - 1));
+        if (stopwatchStartRef.current != null) {
+          setElapsedSeconds(Math.max(0, Math.floor((now - stopwatchStartRef.current) / 1000)));
+        }
+      } else if (endsAtRef.current != null) {
+        setTimeRemaining(Math.max(0, Math.round((endsAtRef.current - now) / 1000)));
       }
-    }, 1000);
+    };
+
+    tick();
+    intervalRef.current = setInterval(tick, 1000);
 
     return () => {
       if (intervalRef.current) {
@@ -250,6 +266,27 @@ export default function FocusTimer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRemaining, status, mode]);
 
+  /* —— 标签页切回/聚焦时按墙钟时间校正（后台 setInterval 会被节流/冻结）—— */
+  React.useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState !== "visible") return;
+      const now = Date.now();
+      if (mode === "stopwatch") {
+        if (stopwatchStartRef.current != null) {
+          setElapsedSeconds(Math.max(0, Math.floor((now - stopwatchStartRef.current) / 1000)));
+        }
+      } else if (endsAtRef.current != null) {
+        setTimeRemaining(Math.max(0, Math.round((endsAtRef.current - now) / 1000)));
+      }
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+  }, [mode]);
+
   /* —— 页面关闭警告 —— */
   React.useEffect(() => {
     if (!challengeActive) return;
@@ -263,10 +300,9 @@ export default function FocusTimer({
 
   /* —— 倒计时完成处理 —— */
   function handleTimerComplete() {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
+    // 不再清除 interval：番茄钟进入休息/下一轮时 status/mode 不变，
+    // 旧逻辑会因依赖 [status, mode] 的 effect 不重新运行而卡住休息计时。
+    // 现改为时间戳驱动：直接更新 endsAtRef，仍 running 的 interval 会自动按新截止时刻继续计时。
 
     if (mode === "pomodoro") {
       if (phase === "focus") {
@@ -282,8 +318,10 @@ export default function FocusTimer({
 
         recordSession(focusMinutes, "pomodoro", "focus");
 
+        const breakSecs = breakMinutes * 60;
         setPhase("break");
-        setTimeRemaining(breakMinutes * 60);
+        setTimeRemaining(breakSecs);
+        endsAtRef.current = Date.now() + breakSecs * 1000;
         toast({
           variant: "success",
           title: "专注完成 🍅",
@@ -294,8 +332,10 @@ export default function FocusTimer({
         });
       } else {
         playBeep(660, 300, 1);
+        const focusSecs = focusMinutes * 60;
         setPhase("focus");
-        setTimeRemaining(focusMinutes * 60);
+        setTimeRemaining(focusSecs);
+        endsAtRef.current = Date.now() + focusSecs * 1000;
         toast({
           variant: "info",
           title: "休息结束 💪",
@@ -308,6 +348,7 @@ export default function FocusTimer({
     } else if (mode === "countdown") {
       playBeep(880, 250, 2);
       setStatus("completed");
+      endsAtRef.current = null;
       const mins = Math.max(1, Math.round(countdownMinutes));
       recordSession(mins, "countdown", "focus");
       toast({
@@ -410,6 +451,8 @@ export default function FocusTimer({
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    endsAtRef.current = null;
+    stopwatchStartRef.current = null;
     setMode(newMode);
     setStatus("idle");
     setElapsedSeconds(0);
@@ -425,12 +468,18 @@ export default function FocusTimer({
 
   /* —— 控制按钮 —— */
   function handleStart() {
+    const now = Date.now();
     if (mode === "pomodoro") {
-      setTimeRemaining(phase === "focus" ? focusMinutes * 60 : breakMinutes * 60);
+      const secs = (phase === "focus" ? focusMinutes : breakMinutes) * 60;
+      setTimeRemaining(secs);
+      endsAtRef.current = now + secs * 1000;
     } else if (mode === "countdown") {
-      setTimeRemaining(countdownMinutes * 60);
+      const secs = countdownMinutes * 60;
+      setTimeRemaining(secs);
+      endsAtRef.current = now + secs * 1000;
     } else {
       setElapsedSeconds(0);
+      stopwatchStartRef.current = now;
     }
     setStatus("running");
     lastPausedAtRef.current = 0;
@@ -438,11 +487,23 @@ export default function FocusTimer({
   }
 
   function handlePause() {
-    setStatus("paused");
+    // 记录暂停起始时刻；时间戳模式下 timeRemaining/elapsedSeconds 已由 tick 保持同步，
+    // 暂停时自然冻结在当前值，恢复时再据此刻重新设定截止/起始时刻。
     lastPausedAtRef.current = Date.now();
+    setStatus("paused");
   }
 
   function handleResume() {
+    const now = Date.now();
+    if (mode === "stopwatch") {
+      // 暂停期间不应计入计时：把起始时刻整体后移暂停时长
+      if (lastPausedAtRef.current > 0 && stopwatchStartRef.current != null) {
+        stopwatchStartRef.current += now - lastPausedAtRef.current;
+      }
+    } else if (endsAtRef.current != null) {
+      // 以当前剩余秒数重新设定截止时刻
+      endsAtRef.current = now + timeRemaining * 1000;
+    }
     // 清除暂停超时计时
     lastPausedAtRef.current = 0;
     setStatus("running");
@@ -463,6 +524,8 @@ export default function FocusTimer({
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    endsAtRef.current = null;
+    stopwatchStartRef.current = null;
     setStatus("idle");
     setElapsedSeconds(0);
     lastPausedAtRef.current = 0;
@@ -474,6 +537,8 @@ export default function FocusTimer({
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    endsAtRef.current = null;
+    stopwatchStartRef.current = null;
     setStatus("idle");
     setElapsedSeconds(0);
     lastPausedAtRef.current = 0;
@@ -488,12 +553,15 @@ export default function FocusTimer({
 
   /* —— 挑战开始/结束 —— */
   function startChallenge() {
+    const now = Date.now();
     setChallengeActive(true);
     setChallengeRound(0);
     setChallengeStartRef(new Date().toISOString());
     setMode("pomodoro");
     setPhase("focus");
-    setTimeRemaining(focusMinutes * 60);
+    const secs = focusMinutes * 60;
+    setTimeRemaining(secs);
+    endsAtRef.current = now + secs * 1000;
     setStatus("running");
     setPomodoroCount(0);
     lastPausedAtRef.current = 0;
@@ -511,6 +579,8 @@ export default function FocusTimer({
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    endsAtRef.current = null;
+    stopwatchStartRef.current = null;
     setStatus("idle");
     setPhase("focus");
     setTimeRemaining(focusMinutes * 60);
